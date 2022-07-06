@@ -2,11 +2,10 @@ require_relative 'base_card_crawler'
 
 class CardMasterCrawler < BaseCardCrawler
   def crawl(url)
-    html = `#{curl_request(url)}`
-    doc = Nokogiri::HTML.parse(html)
+    html_info = open(url)
     ## Sourceの発売日を出力の先頭に埋め込む
-    card_hash_list = [doc.at_css('#previewed')&.text&.gsub(/[[:space:]]/, '')]
-    doc.css('.t_row.c_normal').each do |card|
+    card_hash_list = [html_info[:doc].at_css('#previewed')&.text&.gsub(/[[:space:]]/, '')]
+    html_info[:doc].css('.t_row.c_normal').each do |card|
       species_and_other = card.at_css('.card_info_species_and_other_item')&.text&.gsub(/[[:space:]]/, '')
       type_info = parse_type(species_and_other)
       detail_uri = URI.join(BASE_URL, card.at_css('.link_value')[:value])

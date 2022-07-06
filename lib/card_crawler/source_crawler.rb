@@ -4,9 +4,8 @@ class SourceCrawler < BaseCardCrawler
   def crawl_new(all = false)
     source_hash_list = []
     url = URI.join(BASE_URL, '/yugiohdb/card_list.action').to_s
-    html = `#{curl_request(url)}`
-    doc = Nokogiri::HTML.parse(html)
-    doc.css('.pac_set').each do |source_category|
+    html_info = open(url)
+    html_info[:doc].css('.pac_set').each do |source_category|
       next if source_category.at_css('.new').nil? && !all
 
       source_hash = {}

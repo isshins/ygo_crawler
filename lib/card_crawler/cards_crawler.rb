@@ -3,10 +3,10 @@ require_relative 'base_card_crawler'
 class CardsCrawler < BaseCardCrawler
   def crawl(detail_url)
     card_hash_list  = []
-    detail_html = `#{curl_request(detail_url)}`
-    doc = Nokogiri::HTML.parse(detail_html)
-    card_name = doc.css('#pan_nav li').last.text
-    doc.css('#update_list .inside').each do |pack_tag|
+    html_info = open(detail_url)
+
+    card_name = html_info[:doc].css('#pan_nav li').last.text
+    html_info[:doc].css('#update_list .inside').each do |pack_tag|
       card_hash = {}
       model_number = pack_tag.at_css('.card_number').text.gsub(/[[:space:]]/, '')
       list_href = pack_tag.at_css('.link_value')[:value]
@@ -29,11 +29,10 @@ class CardsCrawler < BaseCardCrawler
 
   def crawl_illust_id(list_url, card_name)
     sleep 1
-    list_html = `#{curl_request(list_url)}`
-    list_doc = Nokogiri::HTML.parse(list_html)
-    target_card = list_doc.css('.t_row.c_normal').find{|card_tag| card_tag.at_css('.card_name').text == card_name}
+    html_info = open(list_url)
+    target_card = html_info[:doc].css('.t_row.c_normal').find{|card_tag| card_tag.at_css('.card_name').text == card_name}
     img_id = target_card.at_css('.box_card_img img')[:id]
-    illust_id = list_html[/#{img_id}.*ciid=(\d*)&enc/,1]
+    illust_id = html_info[:html][/#{img_id}.*ciid=(\d*)&enc/,1]
     illust_id
   end
 end
