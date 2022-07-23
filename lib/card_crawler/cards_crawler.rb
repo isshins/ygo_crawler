@@ -12,9 +12,9 @@ class CardsCrawler < BaseCardCrawler
       list_href = pack_tag.at_css('.link_value')[:value]
       detail_uri = URI(detail_url)
       source_uri = URI.join(BASE_URL, list_href)
-      keys = [:card_id, :pack_id, :rarity, :illust_id]
+      keys = [:card_name_id, :pack_id, :rarity, :illust_id]
 
-      card_hash[:card_id] = Hash[URI.decode_www_form(detail_uri.query)]['cid']
+      card_hash[:card_name_id] = Hash[URI.decode_www_form(detail_uri.query)]['cid']
       card_hash[:pack_id] = Hash[URI.decode_www_form(source_uri.query)]['pid']
       card_hash[:card_name] = card_name
       card_hash[:model_number] = model_number unless model_number.empty?

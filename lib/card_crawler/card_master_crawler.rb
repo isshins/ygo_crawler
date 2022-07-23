@@ -11,7 +11,7 @@ class CardMasterCrawler < BaseCardCrawler
       detail_uri = URI.join(BASE_URL, card.at_css('.link_value')[:value])
        
       card_hash = {
-        card_id: Hash[URI.decode_www_form(detail_uri.query)]['cid'],
+        card_name_id: Hash[URI.decode_www_form(detail_uri.query)]['cid'],
         card_ruby: card.at_css('.card_ruby').text,
         card_display_name: card.at_css('.card_name').text,
         card_attribute: card.at_css('.box_card_attribute').text.gsub(/[[:space:]]/, ''),
