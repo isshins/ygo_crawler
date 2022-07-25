@@ -31,27 +31,28 @@ class KanabellCrawler < BasePageCrawler
           next if rarity.nil?
 
           same_rarity_cards = target_cards.where(rarity: rarity)
-
-          # 同じ型番で絵違いのカードを判定
-          if same_rarity_cards.length > 1
-            if alternate_art
-              card_id = same_rarity_cards.max_by{|target_card| target_card.illust_id}.id
+          same_rarity_cards.each do |same_rarity_card|
+            # 同じ型番で同じレアリティで絵違いのカードを判定
+            if same_rarity_cards.map(&:illust_id).uniq.length > 1
+              if alternate_art
+                card_id = same_rarity_cards.max_by{|target_card| target_card.illust_id}.id
+              else
+                card_id = same_rarity_cards.min_by{|target_card| target_card.illust_id}.id
+              end
             else
-              card_id = same_rarity_cards.min_by{|target_card| target_card.illust_id}.id
+              card_id = target_card.id
             end
-          else
-            card_id = target_card.id
-          end
 
-          page_hash = {
-            site_code: KANABELL_CODE,
-            url: detail_url,
-            image_url: image_url,
-            card_id: card_id,
-            opened: opened,
-          }
-          page_hash_list << page_hash
-          break
+            Card.find(card_id).update(kanabell: true)
+            page_hash = {
+              site_code: KANABELL_CODE,
+              url: detail_url,
+              image_url: image_url,
+              card_id: card_id,
+              opened: opened,
+            }
+            page_hash_list << page_hash
+          end
         end
       end
     end
@@ -61,6 +62,7 @@ class KanabellCrawler < BasePageCrawler
   def convert_rarity(rarity_text)
     rarity_hash = {
       '【ノー】' => ['N'],
+      '【ノレ】' => ['N'],
       '【レア】' => ['R'],
       '【パラ】' => ['P', 'M', 'KC', 'P+R'],
       '【スー】' => ['SR', 'M+SR', 'P+SR'],
@@ -79,11 +81,13 @@ class KanabellCrawler < BasePageCrawler
   end
 
   def crawl_search_list(card_master_rec)
-    search_url = "#{BASE_URL}?genre=1&type=3&act=sell_search&main_card_name=#{card_master_rec.card_display_name}"
+    card_name = card_master_rec.card_display_name.gsub(/[[:space:]]/, '')
+    search_url = "#{BASE_URL}?genre=1&type=3&act=sell_search&main_card_name=#{card_name}"
+    pp search_url
     search_doc = open_doc(search_url)
-
-    target_card_name = search_doc.css('thead th > div > a').find do |card_name|
-      card_name&.text == card_master_rec.card_display_name
+    card_list = search_doc.css('thead th > div > a')
+    target_card_name = card_list.find do |display_card_name|
+      card_name.gsub(/-|－|=|＝/, '') == display_card_name&.text&.gsub(/[[:space:]]|-|－|=|＝/, '')
     end
     card_master_url = URI.join(BASE_URL, target_card_name[:href]).to_s
     open_doc(card_master_url)

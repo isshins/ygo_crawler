@@ -2,6 +2,7 @@ require_relative '../../config/common'
 require_relative './source_crawler'
 require_relative './card_master_crawler'
 require_relative './cards_crawler'
+Dir[File.expand_path("../page_crawler", __FILE__) << "/*.rb"].each{|file| require file}
 require_relative './base_page_crawler'
 
 def crawl_card_masters
@@ -23,7 +24,12 @@ def crawl_card_masters
       pp e.message
       pp e.backtrace
       source_rec.update(status: 3)
-      Log.create_log_record(error: e, category: 'card_master')
+      Log.create_log_record(
+        category: 'source',
+        paramater_id: source_rec.id,
+        event_name: e.class,
+        message: "#{e.message}\n#{e.backtrace}"
+      )
     end
   end
 end
@@ -45,7 +51,12 @@ def crawl_cards
       pp e.message
       pp e.backtrace
       card_master_rec.update(status: 3)
-      Log.create_log_record(error: e, category: 'cards')
+      Log.create_log_record(
+        category: 'card_master',
+        paramater_id: card_master_rec.id,
+        event_name: e.class,
+        message: "#{e.message}\n#{e.backtrace}"
+      )
     end
   end
 end
@@ -58,14 +69,15 @@ def crawl_pages
         page_crawler = BasePageCrawler.factory(site_rec.site_code)
         page_hash_list = page_crawler.crawl(card_master_rec)
         page_hash_list.each do |page_hash|
-          next if Page.exists?(url: page_info[:page_url])
+          if site_rec.site_code == KANABELL_CODE
+            image_url = page_hash[:image_url]
+            page_hash.delete(:image_url)
+            Card.find(page_hash[:card_id]).update(image_url: image_url) if image_url
+          end
 
-          image_url = page_info[:image_url]
-          page_info.slice(:image_url)
-          Card.find(id: page_info[:card_id]).update(image_url: image_url) if image_url          
+          next if Page.exists?(url: page_hash[:url])
 
-          Page.create(page_info)
-          )
+          Page.create(page_hash)
         end
       end
       card_master_rec.update(status: 5)
@@ -74,14 +86,19 @@ def crawl_pages
       pp e.message
       pp e.backtrace
       card_master_rec.update(status: 6)
-      Log.create_log_record(error: e, category: 'pages')
+      Log.create_log_record(
+        category: 'card_master',
+        paramater_id: card_master_rec.id,
+        event_name: e.class,
+        message: "#{e.message}\n#{e.backtrace}"
+      )
     end
   end
 end
 
 loop do
   begin
-    if Source.waiting.exists? || CardMaster.waiting.exists?
+    if Source.waiting.exists? || CardMaster.waiting.exists? || CardMaster.crawled.exists?
       sources = SourceCrawler.new.crawl_new
       sources.each do |source|
         next if Source.exists?(pack_id: source[:pack_id])
@@ -110,6 +127,6 @@ loop do
     pp e.class
     pp e.message
     pp e.backtrace
-    Log.create_log_record(error: e)
+    Log.create_log_record(event_name: e.class, message: "#{e.message}\n#{e.backtrace}")
   end
 end

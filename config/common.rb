@@ -38,6 +38,7 @@ end
 class CardMaster < ActiveRecord::Base
   has_many :cards
   scope :waiting, -> { where(status: 0..1) }
+  scope :crawled, -> { where(status: 2).or(where(status: 4)) }
 end
 
 class Card < ActiveRecord::Base
@@ -63,9 +64,10 @@ class Log < ActiveRecord::Base
   def self.create_log_record(**log)
     create(
       program_name: caller.first,
-      crawler_category: log[:category],
-      error_class: log[:error].class,
-      message: log[:error].message
+      category: log[:category],
+      paramater_id: log[:paramater_id],
+      event_name: log[:event_name],
+      message: log[:message]
     )
   end
 end
