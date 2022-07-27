@@ -6,95 +6,91 @@ Dir[File.expand_path("../page_crawler", __FILE__) << "/*.rb"].each{|file| requir
 
 def crawl_card_masters
   Source.waiting.find_each do |source_rec|
-    begin
-      source_rec.update(status: 1)
-      card_master_crawler = CardMasterCrawler.new
-      card_masters = card_master_crawler.crawl(source_rec[:list_url])
-      release_date = Date.strptime(card_masters.shift, '(公開日:%Y年%m月%d日)')
-      source_rec.update(release_date: release_date) if source_rec.release_date.nil?
-      card_masters.each do |card_master|
-        next if CardMaster.exists?(card_name_id: card_master[:card_name_id])
+    source_rec.update(status: 1)
+    card_master_crawler = CardMasterCrawler.new
+    card_masters = card_master_crawler.crawl(source_rec[:list_url])
+    release_date = Date.strptime(card_masters.shift, '(公開日:%Y年%m月%d日)')
+    source_rec.update(release_date: release_date) if source_rec.release_date.nil?
+    card_masters.each do |card_master|
+      next if CardMaster.exists?(card_name_id: card_master[:card_name_id])
 
-        CardMaster.create(card_master)
-      end
-      source_rec.update(status: 2)
-    rescue => e
-      pp e.class
-      pp e.message
-      pp e.backtrace
-      source_rec.update(status: 3)
-      Log.create_log_record(
-        category: 'source',
-        paramater_id: source_rec.id,
-        event_name: e.class,
-        message: "#{e.message}\n#{e.backtrace}"
-      )
+      CardMaster.create(card_master)
     end
+    source_rec.update(status: 2)
+  rescue => e
+    pp e.class
+    pp e.message
+    pp e.backtrace
+    source_rec.update(status: 3)
+    Log.create_log_record(
+      category: 'source',
+      paramater_id: source_rec.id,
+      event_name: e.class,
+      message: "#{e.message}\n#{e.backtrace}"
+    )
   end
 end
 
 def crawl_cards
   CardMaster.waiting.find_each do |card_master_rec|
-    begin
-      card_master_rec.update(status: 1)
-      card_crawler = CardsCrawler.new
-      cards = card_crawler.crawl(card_master_rec[:detail_url])
-      cards.each do |card_master|
-        next if Card.exists?(key_number: card_master[:key_number])
+    card_master_rec.update(status: 1)
+    card_crawler = CardsCrawler.new
+    cards = card_crawler.crawl(card_master_rec[:detail_url])
+    cards.each do |card_master|
+      next if Card.exists?(key_number: card_master[:key_number])
 
-        Card.create(card_master)
-      end
-      card_master_rec.update(status: 2)
-    rescue => e
-      pp e.class
-      pp e.message
-      pp e.backtrace
-      card_master_rec.update(status: 3)
-      Log.create_log_record(
-        category: 'card_master',
-        paramater_id: card_master_rec.id,
-        event_name: e.class,
-        message: "#{e.message}\n#{e.backtrace}"
-      )
+      Card.create(card_master)
     end
+    card_master_rec.update(status: 2)
+  rescue => e
+    pp e.class
+    pp e.message
+    pp e.backtrace
+    card_master_rec.update(status: 3)
+    Log.create_log_record(
+      category: 'card_master',
+      paramater_id: card_master_rec.id,
+      event_name: e.class,
+      message: "#{e.message}\n#{e.backtrace}"
+    )
   end
 end
 
 def crawl_pages
   CardMaster.crawled.find_each do |card_master_rec|
-    begin
-      card_master_rec.update(status: 4)
-      Site.all.find_each do |site_rec|
-        page_crawler = BasePageCrawler.factory(site_rec.site_code)
-        page_hash_list = page_crawler.crawl(card_master_rec)
-        page_hash_list.each do |page_hash|
-          target_card = Card.find(page_hash[:card_id])
-          target_card.update(Site.crawled(site_rec.site_code))
+    card_master_rec.update(status: 4)
+    Site.all.find_each do |site_rec|
+      next if Page.exists?(card_master_id: card_master_rec.id, site_code: site_rec.site_code)
 
-          if site_rec.site_code == KANABELL_CODE
-            image_url = page_hash[:image_url]
-            page_hash.delete(:image_url)
-            target_card.update(image_url: image_url) if image_url
-          end
+      page_crawler = BasePageCrawler.factory(site_rec.site_code)
+      page_hash_list = page_crawler.crawl(card_master_rec)
+      page_hash_list.each do |page_hash|
+        target_card = Card.find(page_hash[:card_id])
+        target_card.update(Site.crawled(site_rec.site_code))
 
-          next if Page.exists?(url: page_hash[:url], model_number: page_hash[:model_number])
-
-          Page.create(page_hash)
+        if site_rec.site_code == KANABELL_CODE
+          image_url = page_hash[:image_url]
+          page_hash.delete(:image_url)
+          target_card.update(image_url: image_url) if image_url
         end
+
+        next if Page.exists?(url: page_hash[:url], model_number: page_hash[:model_number])
+
+        Page.create(page_hash)
       end
-      card_master_rec.update(status: 5)
-    rescue => e
-      pp e.class
-      pp e.message
-      pp e.backtrace
-      card_master_rec.update(status: 6)
-      Log.create_log_record(
-        category: 'card_master',
-        paramater_id: card_master_rec.id,
-        event_name: e.class,
-        message: "#{e.message}\n#{e.backtrace}"
-      )
     end
+    card_master_rec.update(status: 5)
+  rescue => e
+    pp e.class
+    pp e.message
+    pp e.backtrace
+    card_master_rec.update(status: 6)
+    Log.create_log_record(
+      category: 'card_master',
+      paramater_id: card_master_rec.id,
+      event_name: e.class,
+      message: "#{e.message}\n#{e.backtrace}"
+    )
   end
 end
 

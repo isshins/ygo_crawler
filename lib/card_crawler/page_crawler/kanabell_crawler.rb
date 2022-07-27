@@ -5,7 +5,7 @@ class KanabellCrawler < BasePageCrawler
 
   def crawl(card_master_rec)
     page_hash_list = []
-    
+
     list_doc = crawl_search_list(card_master_rec)
     list_doc.css('.CardListItem').each do |card_href|
       detail_url = URI.join(BASE_URL, card_href.at_css('a')[:href]).to_s
@@ -31,25 +31,24 @@ class KanabellCrawler < BasePageCrawler
           next if rarity.nil?
 
           same_rarity_cards = target_cards.where(rarity: rarity)
-          same_rarity_cards.each do |same_rarity_card|
-            # 同じ型番で同じレアリティで絵違いのカードを判定
-            if same_rarity_cards.map(&:illust_id).uniq.length > 1
-              card_id = select_alternate_id(same_rarity_cards, alternate_art)
-            else
-              card_id = target_card.id
-            end
 
-            Card.find(card_id).update(kanabell: true)
-            page_hash = {
-              site_code: KANABELL_CODE,
-              url: detail_url,
-              image_url: image_url,
-              card_id: card_id,
-              model_number: model_number,
-              opened: opened,
-            }
-            page_hash_list << page_hash
+          # 同じ型番で同じレアリティで絵違いのカードを判定
+          if same_rarity_cards.map(&:illust_id).uniq.length > 1
+            card_id = select_alternate_id(same_rarity_cards, alternate_art)
+          else
+            card_id = same_rarity_cards.first.id
           end
+
+          page_hash = {
+            site_code: KANABELL_CODE,
+            url: detail_url,
+            image_url: image_url,
+            card_id: card_id,
+            card_master_id: card_master_rec.id,
+            model_number: model_number,
+            opened: opened,
+          }
+          page_hash_list << page_hash
         end
       end
     end

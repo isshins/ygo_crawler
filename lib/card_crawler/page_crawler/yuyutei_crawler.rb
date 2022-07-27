@@ -5,7 +5,7 @@ class YuyuteiCrawler < BasePageCrawler
 
   def crawl(card_master_rec)
     page_hash_list = []
-    card_name = tr_hankaku(card_master_rec.card_display_name)
+    card_name = tr_hankaku(card_master_rec.card_display_name).gsub(/[[:space:]]/, '')
     list_url = "https://yuyu-tei.jp/game_ygo/sell/sell_price.php?name=#{card_name}&kizu=0"
     list_doc = open_doc(list_url)
     target_cards = Card.where(card_name_id: card_master_rec.card_name_id)
@@ -25,10 +25,6 @@ class YuyuteiCrawler < BasePageCrawler
         alternate_art = card_name_text.include?('イラスト違い') || card_name_text.include?('右向き')
 
         same_rarity_cards = target_cards.where(model_number: model_number, rarity: rarity)
-        if same_rarity_cards.empty?
-          Log.create_log_record(event_name: 'rarity error', category: 'card_master', paramater_id: card_master_rec.card_name_id)
-          next
-        end
 
         if same_rarity_cards.map(&:illust_id).uniq.length > 1
           card_id = select_alternate_id(same_rarity_cards, alternate_art)
@@ -41,6 +37,7 @@ class YuyuteiCrawler < BasePageCrawler
           url: detail_url,
           model_number: model_number,
           card_id: card_id,
+          card_master_id: card_master_rec.id
         }
         page_hash_list << page_hash
       end
