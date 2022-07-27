@@ -18,7 +18,7 @@ class CardsCrawler < BaseCardCrawler
       card_hash[:pack_id] = Hash[URI.decode_www_form(source_uri.query)]['pid']
       card_hash[:card_name] = card_name
       card_hash[:model_number] = model_number unless model_number.empty?
-      card_hash[:rarity] = pack_tag.at_css('.icon p').text
+      card_hash[:rarity] = pack_tag.at_css('.icon p').text.gsub(' ', '')
       card_hash[:rarity_name] = pack_tag.at_css('.icon span').text.gsub(/[[:space:]]/, '')
       card_hash[:illust_id] = crawl_illust_id(source_uri.to_s, card_name)
       card_hash[:key_number] = keys.map{|key|card_hash[key]}.join

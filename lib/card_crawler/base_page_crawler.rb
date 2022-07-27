@@ -37,6 +37,18 @@ class BasePageCrawler
     body
   end
 
+  def select_alternate_id(same_rarity_cards, alternate_art)
+    if alternate_art
+      same_rarity_cards.max_by{|target_card| target_card.illust_id}.id
+    else
+      same_rarity_cards.min_by{|target_card| target_card.illust_id}.id
+    end
+  end
+
+  def tr_hankaku(string)
+    string.tr('％／＆：！？＜＞＠＝０-９－', '%/&:!?<>@=0-9-')
+  end
+
   def curl_request(_url)
     raise "Called abstract method: #{__method__}"
   end

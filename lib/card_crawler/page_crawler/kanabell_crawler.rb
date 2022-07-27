@@ -34,11 +34,7 @@ class KanabellCrawler < BasePageCrawler
           same_rarity_cards.each do |same_rarity_card|
             # 同じ型番で同じレアリティで絵違いのカードを判定
             if same_rarity_cards.map(&:illust_id).uniq.length > 1
-              if alternate_art
-                card_id = same_rarity_cards.max_by{|target_card| target_card.illust_id}.id
-              else
-                card_id = same_rarity_cards.min_by{|target_card| target_card.illust_id}.id
-              end
+              card_id = select_alternate_id(same_rarity_cards, alternate_art)
             else
               card_id = target_card.id
             end

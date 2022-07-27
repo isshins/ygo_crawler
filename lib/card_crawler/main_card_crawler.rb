@@ -3,7 +3,6 @@ require_relative './source_crawler'
 require_relative './card_master_crawler'
 require_relative './cards_crawler'
 Dir[File.expand_path("../page_crawler", __FILE__) << "/*.rb"].each{|file| require file}
-require_relative './base_page_crawler'
 
 def crawl_card_masters
   Source.waiting.find_each do |source_rec|
@@ -69,13 +68,16 @@ def crawl_pages
         page_crawler = BasePageCrawler.factory(site_rec.site_code)
         page_hash_list = page_crawler.crawl(card_master_rec)
         page_hash_list.each do |page_hash|
+          target_card = Card.find(page_hash[:card_id])
+          target_card.update(Site.crawled(site_rec.site_code))
+
           if site_rec.site_code == KANABELL_CODE
             image_url = page_hash[:image_url]
             page_hash.delete(:image_url)
-            Card.find(page_hash[:card_id]).update(image_url: image_url) if image_url
+            target_card.update(image_url: image_url) if image_url
           end
 
-          next if Page.exists?(url: page_hash[:url])
+          next if Page.exists?(url: page_hash[:url], model_number: page_hash[:model_number])
 
           Page.create(page_hash)
         end

@@ -56,7 +56,12 @@ class Price < ActiveRecord::Base
   belongs_to :page
 end
 
-class Site < ActiveRecord::Base; end
+class Site < ActiveRecord::Base
+
+  def self.crawled(site_code)
+    {find_by(site_code: site_code).en_name.to_sym => true}
+  end
+end
 
 class Log < ActiveRecord::Base
   self.primary_key = :id
