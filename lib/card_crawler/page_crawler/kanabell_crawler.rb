@@ -49,6 +49,7 @@ class KanabellCrawler < BasePageCrawler
               url: detail_url,
               image_url: image_url,
               card_id: card_id,
+              model_number: model_number,
               opened: opened,
             }
             page_hash_list << page_hash
@@ -87,7 +88,7 @@ class KanabellCrawler < BasePageCrawler
     search_doc = open_doc(search_url)
     card_list = search_doc.css('thead th > div > a')
     target_card_name = card_list.find do |display_card_name|
-      card_name.gsub(/-|－|=|＝/, '') == display_card_name&.text&.gsub(/[[:space:]]|-|－|=|＝/, '')
+      tr_hankaku(card_name) == display_card_name&.text&.gsub(/[[:space:]]/, '')
     end
     card_master_url = URI.join(BASE_URL, target_card_name[:href]).to_s
     open_doc(card_master_url)
@@ -115,7 +116,8 @@ class KanabellCrawler < BasePageCrawler
 end
 
 if __FILE__ == $0
-  card_master_rec = CardMaster.find_by(card_display_name: 'ブラック・マジシャン')
+  card_name = 'ブラック・マジシャン'
+  card_master_rec = CardMaster.find_by(card_display_name: card_name)
   crawler = BasePageCrawler.factory(KANABELL_CODE)
   hash_list = crawler.crawl(card_master_rec)
   pp hash_list
