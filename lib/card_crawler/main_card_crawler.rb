@@ -66,7 +66,6 @@ def crawl_pages
       page_hash_list = page_crawler.crawl(card_master_rec)
       page_hash_list.each do |page_hash|
         target_card = Card.find(page_hash[:card_id])
-        target_card.update(Site.crawled(site_rec.site_code))
 
         if site_rec.site_code == KANABELL_CODE
           image_url = page_hash[:image_url]
@@ -77,6 +76,7 @@ def crawl_pages
         next if Page.exists?(url: page_hash[:url], model_number: page_hash[:model_number])
 
         Page.create(page_hash)
+        target_card.update(Site.crawled(site_rec.site_code))
       end
     end
     card_master_rec.update(status: 5)
