@@ -46,7 +46,7 @@ class YuyuteiCrawler < BasePageCrawler
   end
 
   def convert_rarity(rarity_text)
-    rarity_text.gsub('-N', '').tr('-', '+').tr('NR', 'N')
+    rarity_text.gsub('-N', '').tr('-', '+').gsub('NR', 'N')
   end
 
   def curl_request(url)
