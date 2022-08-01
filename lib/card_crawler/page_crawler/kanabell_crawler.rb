@@ -77,15 +77,23 @@ class KanabellCrawler < BasePageCrawler
     rarity_hash[rarity_text]
   end
 
-  def crawl_search_list(card_master_rec)
+  def crawl_search_list(card_master_rec, page_num = nil)
     card_name = card_master_rec.card_display_name.gsub(/[[:space:]]/, '')
-    search_url = "#{BASE_URL}?genre=1&type=3&act=sell_search&main_card_name=#{card_name}"
+    search_url = "#{BASE_URL}?genre=1&type=3&act=sell_search&main_card_name=#{card_name}&page=#{page_num}"
     pp search_url
     search_doc = open_doc(search_url)
     card_list = search_doc.css('thead th > div > a')
     target_card_name = card_list.find do |display_card_name|
       tr_hankaku(card_name) == display_card_name&.text&.gsub(/[[:space:]]/, '')
     end
+
+    # 検索結果が2ページ以上合った場合にページング
+    if target_card_name.nil?
+      page_num = search_doc.at_css('.Paging a:last-child')&.[](:href)&.[](/page=(\d*)#Contents/,1)
+      return nil if page_num.nil?
+      return crawl_search_list(card_master_rec, page_num)
+    end
+
     card_master_url = URI.join(BASE_URL, target_card_name[:href]).to_s
     open_doc(card_master_url)
   end
@@ -113,6 +121,7 @@ end
 
 if __FILE__ == $0
   card_name = 'ブラック・マジシャン'
+  card_name = 'フォース'
   card_master_rec = CardMaster.find_by(card_display_name: card_name)
   crawler = BasePageCrawler.factory(KANABELL_CODE)
   hash_list = crawler.crawl(card_master_rec)
