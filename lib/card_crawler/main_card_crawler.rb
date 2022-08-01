@@ -60,8 +60,6 @@ def crawl_pages
   CardMaster.crawled.find_each do |card_master_rec|
     card_master_rec.update(status: 4)
     Site.all.find_each do |site_rec|
-      next if Page.exists?(card_master_id: card_master_rec.id, site_code: site_rec.site_code)
-
       page_crawler = BasePageCrawler.factory(site_rec.site_code)
       page_hash_list = page_crawler.crawl(card_master_rec)
       page_hash_list.each do |page_hash|

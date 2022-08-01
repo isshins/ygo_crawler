@@ -7,8 +7,9 @@ class YuyuteiCrawler < BasePageCrawler
     page_hash_list = []
     card_name = tr_hankaku(card_master_rec.card_display_name).gsub(/[[:space:]]/, '')
     list_url = "https://yuyu-tei.jp/game_ygo/sell/sell_price.php?name=#{card_name}&kizu=0"
+    pp list_url
     list_doc = open_doc(list_url)
-    target_cards = Card.where(card_name_id: card_master_rec.card_name_id)
+    target_cards = Card.where(card_name_id: card_master_rec.card_name_id, yuyutei: 0)
     model_numbers = target_cards.pluck(:model_number).compact.uniq
     raritiy_lists = list_doc.css('.card_list_box > div')
     raritiy_lists.each do |raritiy_list|

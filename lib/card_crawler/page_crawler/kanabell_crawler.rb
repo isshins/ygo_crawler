@@ -25,8 +25,9 @@ class KanabellCrawler < BasePageCrawler
       opened = card_name_text.include?('開封済み')
 
       model_numbers.each do |model_number|
-        target_cards = Card.where(model_number: model_number)
+        target_cards = Card.where(model_number: model_number, kanabell: 0)
         target_cards.each do |target_card|
+
           rarity = rarities.find{|rarity| target_card.rarity == rarity}
           next if rarity.nil?
 
