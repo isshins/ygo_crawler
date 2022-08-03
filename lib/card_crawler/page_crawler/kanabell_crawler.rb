@@ -22,7 +22,7 @@ class KanabellCrawler < BasePageCrawler
 
       card_name_text = detail_doc.at_css('#TopicPath li:last-child').text
       alternate_art = card_name_text.include?('イラスト違い') || card_name_text.include?('パンドラ')
-      opened = card_name_text.include?('開封済み')
+      not_opened = card_name_text.include?('未開封')
 
       model_numbers.each do |model_number|
         target_cards = Card.where(model_number: model_number, kanabell: 0)
@@ -47,7 +47,7 @@ class KanabellCrawler < BasePageCrawler
             card_id: card_id,
             card_master_id: card_master_rec.id,
             model_number: model_number,
-            opened: opened,
+            not_opened: not_opened,
           }
           page_hash_list << page_hash
         end
@@ -121,7 +121,6 @@ end
 
 if __FILE__ == $0
   card_name = 'ブラック・マジシャン'
-  card_name = 'フォース'
   card_master_rec = CardMaster.find_by(card_display_name: card_name)
   crawler = BasePageCrawler.factory(KANABELL_CODE)
   hash_list = crawler.crawl(card_master_rec)
