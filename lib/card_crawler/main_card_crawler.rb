@@ -2,7 +2,7 @@ require_relative '../../config/common'
 require_relative './source_crawler'
 require_relative './card_master_crawler'
 require_relative './cards_crawler'
-Dir[File.expand_path("../page_crawler", __FILE__) << "/*.rb"].each{|file| require file}
+Dir[File.expand_path("../page_crawler", __FILE__) << "/*crawler.rb"].each{|file| require file}
 
 def crawl_card_masters
   Source.waiting.find_each do |source_rec|
@@ -92,15 +92,15 @@ def crawl_pages
   end
 end
 
+def crawl_waiting?
+ Source.waiting.exists? || CardMaster.waiting.exists? || CardMaster.crawled.exists?
+end
+
 loop do
   begin
-    if Source.waiting.exists? || CardMaster.waiting.exists? || CardMaster.crawled.exists?
-      sources = SourceCrawler.new.crawl_new
-      sources.each do |source|
-        next if Source.exists?(pack_id: source[:pack_id])
-
-        Source.create(source)
-      end
+    source_crawler = SourceCrawler.new
+    sources = source_crawler.crawl_new
+    if Source.create_all?(sources) || crawl_waiting?
 
       puts "カードマスタークロール開始 #{Time.now}"
       crawl_card_masters
@@ -116,7 +116,7 @@ loop do
   
     else
       puts "新情報待ち #{Time.now}"
-      sleep 60
+      sleep 1800
       next
     end
   rescue => e

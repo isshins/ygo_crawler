@@ -33,6 +33,16 @@ Time.zone_default = Time.find_zone! 'Tokyo'
 class Source < ActiveRecord::Base
   has_many :cards
   scope :waiting, -> { where(status: 0..1) }
+
+  def self.create_all?(sources)
+    new_sources = sources.reject{|source| Source.exists?(pack_id: source[:pack_id])}
+    if new_sources.empty?
+      false
+    else
+      new_sources.each{|source| Source.create(source)}
+      true
+    end
+  end
 end
 
 class CardMaster < ActiveRecord::Base
