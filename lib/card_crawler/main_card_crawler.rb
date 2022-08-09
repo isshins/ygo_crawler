@@ -12,7 +12,11 @@ def crawl_card_masters
     release_date = Date.strptime(card_masters.shift, '(公開日:%Y年%m月%d日)')
     source_rec.update(release_date: release_date) if source_rec.release_date.nil?
     card_masters.each do |card_master|
-      next if CardMaster.exists?(card_name_id: card_master[:card_name_id])
+      target_card_master = CardMaster.find_by(card_name_id: card_master[:card_name_id])
+      if target_card_master
+        target_card_master.update(status: 0)
+        next
+      end
 
       CardMaster.create(card_master)
     end
