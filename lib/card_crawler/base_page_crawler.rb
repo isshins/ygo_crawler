@@ -46,7 +46,7 @@ class BasePageCrawler
   end
 
   def tr_hankaku(string)
-    string.tr('％／＆：！？＜＞＠＝０-９－', '%/&:!?<>@=0-9-')
+    string.tr('〜％／＆：！？＜＞＠＝０-９－', '~%/&:!?<>@=0-9-')
   end
 
   def curl_request(_url)
