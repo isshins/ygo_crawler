@@ -87,7 +87,7 @@ class KanabellCrawler < BasePageCrawler
       tr_hankaku(card_name) == display_card_name&.text&.gsub(/[[:space:]]/, '')
     end
 
-    # 検索結果が2ページ以上合った場合にページング
+    # 検索結果の1ページ目に目的のカードがない場合にページング
     if target_card_name.nil?
       page_num = search_doc.at_css('.Paging a:last-child')&.[](:href)&.[](/page=(\d*)#Contents/,1)
       return nil if page_num.nil?
