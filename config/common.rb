@@ -34,7 +34,7 @@ class Source < ActiveRecord::Base
   has_many :cards
   scope :waiting, -> { where(status: 0..1) }
 
-  def self.create_all?(sources)
+  def self.create_new?(sources)
     new_sources = sources.reject{|source| Source.exists?(pack_id: source[:pack_id])}
     if new_sources.empty?
       false

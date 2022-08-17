@@ -104,7 +104,7 @@ loop do
   begin
     source_crawler = SourceCrawler.new
     sources = source_crawler.crawl_new
-    if Source.create_all?(sources) || crawl_waiting?
+    if Source.create_new?(sources) || crawl_waiting?
 
       puts "カードマスタークロール開始 #{Time.now}"
       crawl_card_masters
