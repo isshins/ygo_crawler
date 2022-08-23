@@ -88,7 +88,6 @@ def crawl_pages
     pp e.backtrace
     card_master_rec.update(status: 6)
     Log.create_log_record(
-      site: site_rec.ja_name,
       category: 'card_master',
       paramater_id: card_master_rec.id,
       event_name: e.class,
