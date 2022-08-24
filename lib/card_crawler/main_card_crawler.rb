@@ -9,6 +9,8 @@ def crawl_card_masters
     source_rec.update(status: 1)
     card_master_crawler = CardMasterCrawler.new
     card_masters = card_master_crawler.crawl(source_rec[:list_url])
+    source_rec.update(status: 0) && return if card_masters.length == 1
+
     release_date = Date.strptime(card_masters.shift, '(公開日:%Y年%m月%d日)')
     source_rec.update(release_date: release_date) if source_rec.release_date.nil?
     card_masters.each do |card_master|
@@ -118,6 +120,7 @@ loop do
       crawl_pages
       puts "ページクロール終了 #{Time.now}"
   
+      sleep 60
     else
       puts "新情報待ち #{Time.now}"
       sleep 1800
